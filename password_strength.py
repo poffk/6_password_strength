@@ -1,4 +1,5 @@
 import re
+import getpass
 
 
 def load_data(filepath):
@@ -6,31 +7,55 @@ def load_data(filepath):
         return data_file.read()
 
 
+def password_length_scoring(password):
+    if len(password) < 4:
+        return 1
+    elif len(password) < 12:
+        return 2
+    else:
+        return 3
+
+
+def password_register_scoring(password):
+    if re.findall(r'[A-Z]', password) and re.findall(r'[a-z]', password):
+        return 2
+    else:
+        return 0
+
+
+def password_figures_and_letters_scoring(password):
+    if re.findall(r'[^ \W|\d]', password) and re.findall(r'[\d]', password):
+        return 2
+    else:
+        return 0
+
+
+def password_special_letters_scoring(password):
+    if re.findall(r'\W', password):
+        return 2
+    else:
+        return 0
+
+
+def password_blacklist_scoring(password, blacklist):
+    if password not in re.findall(r'\w+', blacklist):
+        return 1
+    else:
+        return 0
+
+
 def get_password_strength(password, blacklist):
     password_strength_mark = 0
-    #количество символов (<4-1b, <12-2b, >12-3b)
-    if len(password) < 4:
-        password_strength_mark = password_strength_mark + 1
-    elif len(password) < 12:
-        password_strength_mark = password_strength_mark + 2
-    else:
-        password_strength_mark = password_strength_mark + 3
-    #верхний и нижний регистр 2b
-    if re.findall(r'[A-Z]', password) and re.findall(r'[a-z]', password):
-        password_strength_mark = password_strength_mark + 2
-    #есть и буквы цифры 2b
-    if re.findall(r'[^ \W|\d]', password) and re.findall(r'[\d]', password):
-        password_strength_mark = password_strength_mark + 2
-    #специальные символы 2b
-    if re.findall(r'\W', password):
-        password_strength_mark = password_strength_mark + 2
-    #blacklist 1b
-    if password not in re.findall(r'\w+', blacklist):
-        password_strength_mark = password_strength_mark + 1
+    password_strength_mark += password_length_scoring(password)
+    password_strength_mark += password_register_scoring(password)
+    password_strength_mark += password_figures_and_letters_scoring(password)
+    password_strength_mark += password_special_letters_scoring(password)
+    password_strength_mark += password_blacklist_scoring(password, blacklist)
     return password_strength_mark
 
 
 if __name__ == '__main__':
-    password = input('Введите пароль для проверки: ')
+    print('Введите пароль для проверки: ')
+    password = getpass.getpass()
     blacklist = load_data('blacklist.txt')
     print(get_password_strength(password, blacklist))
